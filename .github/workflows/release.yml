@@ -5,6 +5,15 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      repository:
+        description: "Target repository"
+        required: true
+        default: "testpypi"
+        type: choice
+        options:
+          - testpypi
+          - pypi
 
 jobs:
   build-and-publish:
@@ -36,7 +45,7 @@ jobs:
       - name: Check built distributions
         run: python -m twine check dist/*
 
-      - name: Publish to PyPI
+      - name: Publish to PyPI or TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: https://test.pypi.org/legacy/
+          repository-url: ${{ github.event.inputs.repository == 'pypi' && 'https://upload.pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}

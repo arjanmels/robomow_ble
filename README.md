@@ -30,6 +30,7 @@ Create a `RobomowDevice` with:
 - `mainboard_serial`: mower mainboard serial used during authentication.
 - `update_callback` (optional): called for each update as `RobomowUpdate(key, value)`.
 
+
 ```python
 from robomow_ble import RobomowDevice
 
@@ -37,6 +38,17 @@ mower = RobomowDevice(
     mainboard_serial="12345678901234",
 )
 ```
+
+### How to find `mainboard_serial`:
+
+1. Log in to myrobomow.robomow.com.
+2. Open your browser's Developer Tools (F12).
+3. Go to the Network tab.
+4. Reload the page.
+5. Look for a request ending in `/api/customer/products`.
+6. Click the request and open the Response tab.
+7. In the JSON response, find the field named `MainboardSerial`. This value is the actual mainboard serial number.
+
 
 ### Connect and authenticate
 

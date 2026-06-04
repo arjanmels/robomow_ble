@@ -36,7 +36,19 @@ Before publishing a new release:
     git push origin v0.1.1
     ```
 
-The GitHub Actions workflow will build, test, and publish to TestPyPI automatically.
+    This will automatically build, test, and publish to **TestPyPI**.
+
+5. Once verified on TestPyPI, manually trigger the workflow to publish to **real PyPI**:
+
+    - Go to Actions → Release workflow
+    - Click "Run workflow"
+    - Select "pypi" from the repository dropdown
+    - Click "Run workflow"
+
+The GitHub Actions workflow will automatically:
+- Build and test the package
+- Push tags (`v*`) to **TestPyPI** by default (safe testing environment)
+- Allow manual trigger to publish to **real PyPI** (from Actions → Run workflow → select "pypi")
 
 ## Documentation
 

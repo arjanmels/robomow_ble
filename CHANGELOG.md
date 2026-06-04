@@ -7,21 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-04
+
+- Added dual PyPI/TestPyPI publishing with manual selection.
+- Added `CONTRIBUTING.md` guide.
+- Fixed GitHub Actions Node.js 24 compatibility.
+
+## [0.3.0] - 2026-06-04
+
+- Added API documentation workflow and GitHub Pages deployment.
+- Added docs-only enum representation via `ROBOMOW_BLE_DOCS` environment variable.
+
 ## [0.2.0] - 2026-06-04
 
-### Added
-- GitHub Actions workflows for publishing and documentation
-
-### Changed
-- Improved public API surface and docstrings.
-- Expanded `README.md` with full usage guide and minimal example.
-- Removed address parameter from RoboMowDevice constructor, now only passed to `async_connect()`.
+- Improved public API and docstrings.
+- Expanded README with full usage guide and examples.
 
 ## 0.1.0 - 2026-06-02
 
-### Added
 - Initial release of the Robomow BLE protocol library.
 
-[Unreleased]: https://github.com/arjanmels/robomow_ble/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/arjanmels/robomow_ble/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/arjanmels/robomow_ble/compare/v0.3.0...v1.0.0
+[0.3.0]: https://github.com/arjanmels/robomow_ble/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/arjanmels/robomow_ble/releases/tag/v0.2.0
 
