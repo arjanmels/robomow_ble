@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Robomow-BLE"
-version = "0.2.0"
+version = "0.3.0"
 description = "Robomow BLE protocol library"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -17,12 +17,10 @@ keywords = ["ble", "bluetooth", "robomow", "lawn-mower", "protocol"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
+  "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries",
   "Topic :: System :: Hardware :: Hardware Drivers",
   "Typing :: Typed",
@@ -43,7 +41,6 @@ docs = [
 
 [project.urls]
 Homepage = "https://github.com/arjanmels/robomow_ble"
-Repository = "https://github.com/arjanmels/robomow_ble"
 Changelog = "https://github.com/arjanmels/robomow_ble/blob/main/CHANGELOG.md"
 Documentation = "https://arjanmels.github.io/robomow_ble/"
 Issues = "https://github.com/arjanmels/robomow_ble/issues"
