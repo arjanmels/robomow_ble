@@ -25,7 +25,6 @@ UUID_CHAR_DATA_IN = "ff00a506-d020-913c-1234-56d97200a6a6"
 
 UNKNOWN_FIELD_VALUE = 0xFFFF
 
-
 class MessageType(IntEnum):
     """Basic message types used in packet payloads."""
 
@@ -82,11 +81,24 @@ class MowerModel(IntEnum):
 
 @dataclass
 class MowerSchedule:
-    """Data class representing a Robomow mowing schedule."""
+    """Data class representing a Robomow mowing schedule.
+
+    Attributes:
+        start_time: Start of the daily mowing window.
+        end_time: End of the daily mowing window.
+        day: Seven-day schedule entries, ordered Monday to Sunday.
+    """
 
     @dataclass
     class Day:
-        """Data class representing a day in the mowing schedule."""
+        """Data class representing a day in the mowing schedule.
+
+        Attributes:
+            enabled: Whether mowing is enabled for the day.
+            cycles: Number of mowing cycles scheduled for the day.
+            zone: Zone to mow during the schedule entry.
+            duration: Mowing duration in minutes.
+        """
 
         enabled: bool = True
         cycles: int = 1
@@ -120,7 +132,7 @@ class MowerOperatingState(StrEnum):
 
 
 class EntityKey(StrEnum):
-    """Entity keys for all Robomow entities."""
+    """Entity keys for Robomow entities."""
 
     LAWN_MOWER = "lawn_mower"
     BATTERY_LEVEL = "battery_level"
@@ -157,7 +169,15 @@ class EntityKey(StrEnum):
 
 @dataclass
 class MowerOperation:
-    """A single parsed mower operation history entry."""
+    """A single parsed mower operation history entry.
+
+    Attributes:
+        id: Operation record identifier.
+        start_time: Start time of the operation.
+        duration: Operation duration in minutes.
+        zone: Zone used for the operation.
+        error: Message describing the operation result.
+    """
 
     id: int
     start_time: datetime.datetime
@@ -168,7 +188,13 @@ class MowerOperation:
 
 @dataclass(frozen=True)
 class Message:
-    """Base class for user-facing messages with optional title and text."""
+    """Base class for user-facing messages with optional title and text.
+
+    Attributes:
+        title: Short human-readable message title.
+        text: Optional longer explanatory text.
+        number: Optional numeric code used by the mower protocol.
+    """
 
     title: str
     text: str | None = None

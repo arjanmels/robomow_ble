@@ -6,6 +6,7 @@ import asyncio
 import struct
 from collections import deque
 from contextlib import suppress
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
@@ -55,8 +56,14 @@ if TYPE_CHECKING:
     from .family_handler_base import RobomowFamilyHandler
 
 
-class RobomowUpdate(NamedTuple):
-    """Structured update payload for entity state changes."""
+@dataclass(frozen=True, slots=True)
+class RobomowUpdate:
+    """Structured update payload for entity state changes.
+
+    Attributes:
+        key: Entity key identifying the updated value.
+        value: The updated value.
+    """
 
     key: EntityKey
     value: Any
@@ -80,39 +87,44 @@ class PendingCommand(NamedTuple):
 
 
 class RobomowDevice:
-    """Base representation of a Robomow BLE device."""
+    """Base representation of a Robomow BLE device.
 
-    _AUTOMATIC_OPERATION_LABELS: ClassVar[dict[int, MowerOperatingState]] = {
-        0: MowerOperatingState.WARMING_UP,
-        1: MowerOperatingState.GOING_TO_START,
-        2: MowerOperatingState.MOWING,
-        3: MowerOperatingState.EDGE_MOWING,
-        4: MowerOperatingState.RETURNING_HOME_WARMING_UP,
-        5: MowerOperatingState.RETURNING_HOME_FOLLOWING_EDGE,
-        6: MowerOperatingState.RETURNING_HOME_SEARCHING_EDGE,
-        7: MowerOperatingState.LEARNING_ENTRY_POINT,
-    }
-    _OPERATING_STATE_AUTOMATIC: ClassVar[int] = 3
-    _OPERATING_STATE_LABELS: ClassVar[dict[int, MowerOperatingState]] = {
-        1: MowerOperatingState.IDLE,
-        2: MowerOperatingState.CHARGING,
-        _OPERATING_STATE_AUTOMATIC: MowerOperatingState.AUTOMATIC,
-        4: MowerOperatingState.REMOTE_CONTROL,
-        5: MowerOperatingState.BIT,
-    }
-    STATE_LABELS: ClassVar[list[str]] = [
-        *(state.value for state in _OPERATING_STATE_LABELS.values()),
-        *(state.value for state in _AUTOMATIC_OPERATION_LABELS.values()),
-    ]
+    Attributes:
+        mainboard_serial: Serial used during authentication.
+        family: Detected mower family.
+        model: Detected mower model.
+        mainboard_version: Mainboard hardware version, if known.
+        software_version: Software version, if known.
+        software_release: Software release number, if known.
+        schedule_enabled: Whether the mower schedule is enabled, if known.
+        schedule: Current mower schedule, if known.
+        last_operations: Most recent operation history entries.
+        anti_theft_enabled: Whether anti-theft is enabled, if known.
+        child_lock_enabled: Whether child lock is enabled, if known.
+        anti_theft_active: Whether anti-theft is active, if known.
+        mower_home: Whether the mower is at home, if known.
+        charging_active: Whether charging is active, if known.
+        message: Latest mower message, if known.
+        operating_state: Latest operating state, if known.
+        battery_level: Latest battery level, if known.
+        next_departure: Next scheduled departure, if known.
+        previous_departure: Previous scheduled departure, if known.
+        expected_duration: Expected mowing duration, if known.
+        no_depart_reason: Reason the mower has not departed, if known.
+        rssi: Latest RSSI value, if known.
+    """
 
     def __init__(
         self,
-        address: str,
         mainboard_serial: str,
         update_callback: RobomowUpdateCallback | None,
     ) -> None:
-        """Initialize the device."""
-        self._address: str = address
+        """Initialize the device.
+
+        Args:
+            mainboard_serial: Mainboard serial used to authenticate the mower.
+            update_callback: Optional callback that receives state updates.
+        """
         self._mainboard_serial: bytes = (
             mainboard_serial.strip().encode("utf-8") + b"\x00"
         )
@@ -384,6 +396,26 @@ class RobomowDevice:
         self._mainboard_version = value
         self._data_changed(EntityKey.MAINBOARD_VERSION, self._mainboard_version)
 
+    _AUTOMATIC_OPERATION_LABELS: ClassVar[dict[int, MowerOperatingState]] = {
+        0: MowerOperatingState.WARMING_UP,
+        1: MowerOperatingState.GOING_TO_START,
+        2: MowerOperatingState.MOWING,
+        3: MowerOperatingState.EDGE_MOWING,
+        4: MowerOperatingState.RETURNING_HOME_WARMING_UP,
+        5: MowerOperatingState.RETURNING_HOME_FOLLOWING_EDGE,
+        6: MowerOperatingState.RETURNING_HOME_SEARCHING_EDGE,
+        7: MowerOperatingState.LEARNING_ENTRY_POINT,
+    }
+    _OPERATING_STATE_AUTOMATIC: ClassVar[int] = 3
+    _OPERATING_STATE_LABELS: ClassVar[dict[int, MowerOperatingState]] = {
+        1: MowerOperatingState.IDLE,
+        2: MowerOperatingState.CHARGING,
+        _OPERATING_STATE_AUTOMATIC: MowerOperatingState.AUTOMATIC,
+        4: MowerOperatingState.REMOTE_CONTROL,
+        5: MowerOperatingState.BIT,
+    }
+
+
     def _describe_operating_state(
         self, state: int, operation: int
     ) -> MowerOperatingState | str:
@@ -500,11 +532,6 @@ class RobomowDevice:
             self._char_data_in,
             self._async_handle_data_received,
         )
-
-    @property
-    def address(self) -> str:
-        """Return the device address."""
-        return self._address
 
     @property
     def mainboard_serial(self) -> str:
@@ -650,7 +677,11 @@ class RobomowDevice:
 
 
     async def async_connect(self, device: BLEDevice) -> None:
-        """Create and connect a Robomow BLE client."""
+        """Create and connect a Robomow BLE client.
+
+        Args:
+            device: Discovered BLE device to connect to.
+        """
         async with self._connect_task_lock:
             if self._connect_task is None or self._connect_task.done():
                 self._connect_task = asyncio.create_task(
@@ -671,7 +702,7 @@ class RobomowDevice:
             await self._client.disconnect()
 
     async def async_disconnect(self) -> None:
-        """Disconnect the BLE client."""
+        """Disconnect the BLE client and stop active polling tasks."""
         async with self._connect_task_lock:
             connect_task = self._connect_task
             self._connect_task = None
@@ -793,7 +824,14 @@ class RobomowDevice:
         )
 
     async def async_update_date_time(self, timestamp: datetime | None = None) -> bool:
-        """Update mower date and time."""
+        """Update mower date and time.
+
+        Args:
+            timestamp: Timestamp to send; defaults to the current local time.
+
+        Returns:
+            True when the message was written successfully.
+        """
         timestamp = timestamp or datetime.now().astimezone()
         return await self._async_send_msg_with_sequence(
             MessageType.UPDATE_DATE_TIME,

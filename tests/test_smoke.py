@@ -28,12 +28,10 @@ def test_update_named_tuple_shape() -> None:
 def test_device_defaults_without_connection() -> None:
     """A fresh device should expose safe default values."""
     mower = RobomowDevice(
-        address="AA:BB:CC:DD:EE:FF",
         mainboard_serial="12345678901234",
         update_callback=None,
     )
 
-    assert mower.address == "AA:BB:CC:DD:EE:FF"
     assert mower.mainboard_serial == "12345678901234"
     assert mower.family == MowerFamily.Unknown
     assert mower.model == MowerModel.Unknown

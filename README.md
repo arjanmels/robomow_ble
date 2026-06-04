@@ -1,72 +1,107 @@
 # Robomow-BLE
 
-`robomow_ble` is a standalone Python library for talking to Robomow mowers over
+Robomow-BLE is a standalone Python library for talking to Robomow mowers over
 Bluetooth Low Energy (BLE).
 
 It provides a reusable BLE protocol layer for Robomow mowers and can be used
 directly in Python applications.
 
-## Current status
+Currently it only supports RT models. 
+Support for other models may be added in the future if there is demand and access to devices for testing.
 
-- Developed in this repository.
-- Not published to PyPI yet.
-- Requires Python 3.12+.
+## API Overview
 
-## Installation
+Please refer to the [API documentation](https://arjanmels.github.io/robomow_ble/) for details.
 
-Until this package is published, install it from source:
+## How to use
+
+### Install
+
+Install from PyPI:
 
 ```bash
-pip install -e .[test]
+python -m pip install Robomow-BLE
 ```
 
-## Main API
+### Create a device client
 
-Top-level exports from `robomow_ble`:
+Create a `RobomowDevice` with:
 
-- `RobomowDevice`: main BLE client and control API.
-- `RobomowUpdate`: update callback payload (`key`, `value`).
-- `EntityKey`: enum of update/state keys.
-- `WireSignalType`: enum for wire signal settings.
-- `RobomowAuthenticationError`: raised when BLE authentication fails.
+- `mainboard_serial`: mower mainboard serial used during authentication.
+- `update_callback` (optional): called for each update as `RobomowUpdate(key, value)`.
 
-### `RobomowDevice`
+```python
+from robomow_ble import RobomowDevice
 
-Create a device instance with:
+mower = RobomowDevice(
+    mainboard_serial="12345678901234",
+)
+```
 
-- `address`: BLE MAC address.
-- `mainboard_serial`: mower mainboard serial (used during auth).
-- `update_callback`: optional callback called with `RobomowUpdate` when values
-	change.
+### Connect and authenticate
 
-Important methods:
+Discover a BLE device with Bleak, then connect:
 
-- Connection lifecycle:
-	- `async_connect(device)`
-	- `async_disconnect()`
-	- `is_connected()`
-- Common controls:
-	- `async_start_mowing(duration_minutes=None, starting_zone=None)`
-	- `async_start_mowing_edge()`
-	- `async_stop_mowing()`
-	- `async_return_to_home()`
-- Settings:
-	- `async_enable_schedule()` / `async_disable_schedule()`
-	- `async_set_schedule(schedule)`
-	- `async_enable_anti_theft()` / `async_disable_anti_theft()`
-	- `async_enable_child_lock()` / `async_disable_child_lock()`
-	- `async_set_wire_signal_type(wire_signal_type)`
-	- `async_set_starting_point_a(value)` / `async_set_starting_point_b(value)`
+```python
+from bleak import BleakScanner
 
-Common read-only state properties include:
+ble_device = await BleakScanner.find_device_by_address(address, timeout=15.0)
+if ble_device is None:
+    raise RuntimeError("Mower not found")
 
-- Identity/version: `family`, `model`, `mainboard_version`,
-	`software_version`, `software_release`
-- Live state: `operating_state`, `message`, `battery_level`, `rssi`
-- Schedule/status: `schedule_enabled`, `schedule`, `next_departure`,
-	`previous_departure`, `expected_duration`, `no_depart_reason`
-- Safety/system flags: `anti_theft_enabled`, `anti_theft_active`,
-	`child_lock_enabled`, `mower_home`, `charging_active`
+await mower.async_connect(ble_device)
+```
+
+### Receive updates
+
+Pass a callback to receive state changes:
+
+```python
+from robomow_ble import RobomowUpdate, EntityKey
+
+
+def on_update(update: RobomowUpdate) -> None:
+    if update.key == EntityKey.BATTERY_LEVEL:
+        print(f"Battery: {update.value}%")
+    else:
+        print(f"{update.key}: {update.value}")
+```
+
+### Send commands
+
+Common control methods:
+
+- `await mower.async_start_mowing(duration_minutes=30)`
+- `await mower.async_start_mowing_edge()`
+- `await mower.async_stop_mowing()`
+- `await mower.async_return_to_home()`
+
+Common settings methods:
+
+- `await mower.async_enable_schedule()` / `await mower.async_disable_schedule()`
+- `await mower.async_set_schedule(schedule)`
+- `await mower.async_enable_anti_theft()` / `await mower.async_disable_anti_theft()`
+- `await mower.async_enable_child_lock()` / `await mower.async_disable_child_lock()`
+- `await mower.async_set_wire_signal_type(wire_signal_type)`
+
+### Read state
+
+Example state properties:
+
+- Identity/version: `family`, `model`, `mainboard_version`, `software_version`
+- Live values: `operating_state`, `message`, `battery_level`, `rssi`
+- Status: `schedule_enabled`, `next_departure`, `expected_duration`
+
+### Disconnect cleanly
+
+Always disconnect in a `finally` block:
+
+```python
+try:
+    ...
+finally:
+    await mower.async_disconnect()
+```
 
 ## Minimal example
 
@@ -74,7 +109,7 @@ Common read-only state properties include:
 import asyncio
 
 from bleak import BleakScanner
-from robomow_ble import EntityKey, RobomowDevice, RobomowUpdate
+from robomow_ble import RobomowDevice, RobomowUpdate, EntityKey
 
 
 def on_update(update: RobomowUpdate) -> None:
@@ -94,7 +129,6 @@ async def main() -> None:
         raise RuntimeError("Mower not found")
 
     mower = RobomowDevice(
-        address=address,
         mainboard_serial=mainboard_serial,
         update_callback=on_update,
     )
@@ -141,4 +175,24 @@ Before publishing a new release to PyPI:
 6. Create a git tag such as `v0.1.1` and push it to trigger the release workflow.
 
 7. If you want a manual fallback, you can still upload with Twine after a local build.
+
+### Documentation
+
+API documentation is generated from Python docstrings and published to GitHub Pages:
+
+- Live docs: https://arjanmels.github.io/robomow_ble/
+- Source of truth: module, class, and method docstrings in `src/robomow_ble/`
+
+Generate docs locally:
+
+```bash
+python -m pip install -e .[docs]
+python -m pdoc --docformat google robomow_ble -o site
+```
+
+Run the second command from the repository root after creating/activating the
+project virtual environment so `robomow_ble` and its dependencies are importable.
+
+The repository includes a GitHub Actions workflow that rebuilds and deploys docs
+on every push to `main`.
 

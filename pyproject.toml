@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Robomow-BLE"
-version = "0.1.0"
-description = "Robomow BLE protocol core library"
+version = "0.2.0"
+description = "Robomow BLE protocol library"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
@@ -28,6 +28,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
+  "attrs>=23.2.0",
   "bleak>=0.22.0",
   "bleak-retry-connector>=3.10.0"
 ]
@@ -36,11 +37,15 @@ dependencies = [
 test = [
   "pytest>=8.0"
 ]
+docs = [
+  "pdoc>=15.0"
+]
 
 [project.urls]
 Homepage = "https://github.com/arjanmels/robomow_ble"
 Repository = "https://github.com/arjanmels/robomow_ble"
 Changelog = "https://github.com/arjanmels/robomow_ble/blob/main/CHANGELOG.md"
+Documentation = "https://arjanmels.github.io/robomow_ble/"
 Issues = "https://github.com/arjanmels/robomow_ble/issues"
 
 [tool.setuptools]
