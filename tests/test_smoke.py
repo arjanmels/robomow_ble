@@ -1,13 +1,13 @@
-"""Smoke tests for the robomow_ble package."""
+"""Smoke tests for the robomow_ble_lib package."""
 
-from robomow_ble import (
+from robomow_ble_lib import (
     EntityKey,
     RobomowAuthenticationError,
     RobomowDevice,
     RobomowUpdate,
     WireSignalType,
 )
-from robomow_ble.const import MowerFamily, MowerModel
+from robomow_ble_lib.const import MowerFamily, MowerModel
 
 
 def test_top_level_exports_are_importable() -> None:

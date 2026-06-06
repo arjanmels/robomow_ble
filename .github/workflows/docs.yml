@@ -31,7 +31,7 @@ jobs:
         run: python -m pip install --upgrade pip && python -m pip install .[docs]
 
       - name: Build API docs from docstrings
-        run: ROBOMOW_BLE_DOCS=1 python -m pdoc --docformat google robomow_ble -o site
+        run: python -m pdoc --docformat google robomow_ble_lib -o site
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

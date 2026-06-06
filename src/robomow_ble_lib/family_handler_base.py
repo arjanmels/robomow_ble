@@ -6,9 +6,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from robomow_ble.const import MowerSchedule, Zone
-
-    from .const import WireSignalType
+    from .const import WireSignalType, MowerSchedule, Zone
     from .mower import PendingCommand, RobomowDevice
 
 

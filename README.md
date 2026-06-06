@@ -32,7 +32,7 @@ Create a `RobomowDevice` with:
 
 
 ```python
-from robomow_ble import RobomowDevice
+from robomow_ble_lib import RobomowDevice
 
 mower = RobomowDevice(
     mainboard_serial="12345678901234",
@@ -69,7 +69,7 @@ await mower.async_connect(ble_device)
 Pass a callback to receive state changes:
 
 ```python
-from robomow_ble import RobomowUpdate, EntityKey
+from robomow_ble_lib import RobomowUpdate, EntityKey
 
 
 def on_update(update: RobomowUpdate) -> None:
@@ -121,7 +121,7 @@ finally:
 import asyncio
 
 from bleak import BleakScanner
-from robomow_ble import RobomowDevice, RobomowUpdate, EntityKey
+from robomow_ble_lib import RobomowDevice, RobomowUpdate, EntityKey
 
 
 def on_update(update: RobomowUpdate) -> None:

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+PYTHON=".venv/Scripts/python.exe"
+if [ ! -x "$PYTHON" ]; then
+  if command -v python >/dev/null 2>&1; then
+    PYTHON="python"
+  else
+    echo "Python not found. Create .venv or ensure python is available on PATH."
+    exit 1
+  fi
+fi
+
+echo "[pre-commit] Regenerating documentation..."
+"$PYTHON" -m pdoc --docformat google robomow_ble_lib -o site
+
+echo "[pre-commit] Running tests..."
+"$PYTHON" -m pytest -q
+
+echo "[pre-commit] Running Ruff..."
+"$PYTHON" -m ruff check .
+
+echo "[pre-commit] Running Pyright..."
+"$PYTHON" -m pyright --pythonpath "$PYTHON"
+
+echo "[pre-commit] All checks passed."

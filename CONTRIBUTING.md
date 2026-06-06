@@ -8,6 +8,19 @@ cd robomow_ble
 python -m venv .venv
 .venv\Scripts\activate  # Windows
 pip install -e .[test,docs]
+git config core.hooksPath .githooks
+```
+
+This repository includes a native Git `pre-commit` hook that:
+- Regenerates API docs into `site/`
+- Runs `pytest -q`
+- Runs `ruff check .`
+- Runs `pyright`
+
+If you prefer one command for all required developer tooling:
+
+```bash
+pip install -e .[dev]
 ```
 
 ## Running tests
@@ -55,13 +68,13 @@ The GitHub Actions workflow will automatically:
 API documentation is generated from Python docstrings using [pdoc](https://pdoc.dev/) and published to GitHub Pages on every push to `main`.
 
 - Published docs: https://arjanmels.github.io/robomow_ble/
-- Source of truth: docstrings in `src/robomow_ble/`
+- Source of truth: docstrings in `src/robomow_ble_lib/`
 
 Generate docs locally:
 
 ```bash
 .venv\Scripts\activate  # Windows
-python -m pdoc --docformat google robomow_ble -o site
+python -m pdoc --docformat google robomow_ble_lib -o site
 ```
 
 Docs are rebuilt and deployed to GitHub Pages automatically on every push to `main`.
