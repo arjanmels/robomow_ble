@@ -140,6 +140,7 @@ class RobomowDevice:
         self._receive_buffer: bytearray = bytearray()
         self._connect_lock = asyncio.Lock()
         self._connect_task_lock = asyncio.Lock()
+        self._write_lock = asyncio.Lock()
         self._connect_task: asyncio.Task[None] | None = None
         self._date_time_poll_cancel: Callable[[], None] | None = None
         self._status_poll_cancel: Callable[[], None] | None = None
@@ -697,9 +698,10 @@ class RobomowDevice:
         LOGGER.debug("BLE client disconnect called")
         self._cancel_periodic_polling()
         if self._client is not None and self._client.is_connected:
-            if self._char_data_in is not None:
-                await self._client.stop_notify(self._char_data_in)
-            await self._client.disconnect()
+            async with self._write_lock:
+                if self._char_data_in is not None:
+                    await self._client.stop_notify(self._char_data_in)
+                await self._client.disconnect()
 
     async def async_disconnect(self) -> None:
         """Disconnect the BLE client and stop active polling tasks."""
@@ -719,18 +721,22 @@ class RobomowDevice:
 
     async def _async_write_value(self, data: bytes) -> bool:
         """Write a packet payload to the mower data output characteristic."""
-        if not self.is_connected() or not self._client or not self._char_data_out:
-            return False
+        async with self._write_lock:
+            if not self.is_connected() or not self._client or not self._char_data_out:
+                return False
 
-        try:
-            for start in range(0, len(data), 20):
-                await self._client.write_gatt_char(
-                    self._char_data_out, data[start : start + 20], response=True
-                )
-        except BleakError as err:
-            LOGGER.error("Error writing data: %s", err)
-            return False
-        return True
+            try:
+                for start in range(0, len(data), 20):
+                    await self._client.write_gatt_char(
+                        self._char_data_out, data[start : start + 20], response=True
+                    )
+            except BleakError as err:
+                LOGGER.error("Error writing data: %s", err)
+                return False
+            except TimeoutError:
+                LOGGER.info("Timeout while writing data")
+                return False
+            return True
 
     @staticmethod
     def _calculate_checksum(data: bytes | bytearray | memoryview) -> int:
@@ -759,7 +765,7 @@ class RobomowDevice:
         self, msg_type: MessageType, payload: bytes | bytearray | memoryview
     ) -> bool:
         """Send a message with a 2-byte command counter and the given payload."""
-        command_counter = self._command_counter = self._command_counter + 1
+        command_counter = self._command_counter = (self._command_counter + 1) & 0xFFFF
         buf = struct.pack(">H", command_counter) + payload
         pending_command = PendingCommand(command_counter, msg_type, payload)
         self._pending_commands.append(pending_command)
@@ -1020,7 +1026,7 @@ class RobomowDevice:
 
             skipped = [self._pending_commands.popleft() for _ in range(index)]
             if skipped:
-                LOGGER.warning(
+                LOGGER.info(
                     "Detected %d missing response(s) before command counter 0x%04X: %s",
                     len(skipped),
                     command_counter,
@@ -1029,7 +1035,7 @@ class RobomowDevice:
 
             cmd = self._pending_commands.popleft()
             if msg_type not in (MessageType.ACKNOWLEDGE, cmd.msg_type):
-                LOGGER.warning(
+                LOGGER.info(
                     "Expected response of type %s for command counter 0x%04X but got "
                     "type %s",
                     cmd.msg_type.name,
@@ -1062,7 +1068,7 @@ class RobomowDevice:
                 self._receive_buffer[0] != MESSAGE_START_BYTE
                 or self._receive_buffer[2] != MESSAGE_RECEIVE_BYTE
             ):
-                LOGGER.warning(
+                LOGGER.info(
                     "Received malformed packet: %s",
                     self._receive_buffer.hex(),
                 )
@@ -1077,7 +1083,7 @@ class RobomowDevice:
             self._receive_buffer = self._receive_buffer[packet_len:]
 
             if self._calculate_checksum(packet[:-1]) != packet[-1]:
-                LOGGER.warning(
+                LOGGER.info(
                     "Received packet with invalid checksum: %s",
                     packet.hex(),
                 )
@@ -1086,7 +1092,7 @@ class RobomowDevice:
             try:
                 msg_type = MessageType(packet[3])
             except ValueError:
-                LOGGER.warning(
+                LOGGER.info(
                     "Received packet with unknown msg_type 0x%02X: %s",
                     packet[3],
                     packet.hex(),
@@ -1154,7 +1160,7 @@ class RobomowDevice:
 
         request = self._pop_pending_command(response.counter, msg_type)
         if not request:
-            LOGGER.warning(
+            LOGGER.info(
                 "Received %s response with unknown command counter 0x%04X",
                 msg_type.name,
                 command_counter,
@@ -1168,7 +1174,7 @@ class RobomowDevice:
         elif msg_type == MessageType.ACKNOWLEDGE:
             pass  # No additional handling needed for ACKNOWLEDGE responses
         else:
-            LOGGER.warning(
+            LOGGER.info(
                 "Received %s response with unhandled msg_type for command counter "
                 "0x%04X: %s => %s",
                 request.msg_type.name,
