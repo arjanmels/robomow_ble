@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-14
+
+- Fixed date/time sync.
+- Fixed command counter wrap-around
+- Added write lock to prevent disconnect during write.
+
 ## [1.1.0] - 2026-06-06
 
 - Renamed Python package module from `robomow_ble` to `robomow_ble_lib`.
@@ -35,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of the Robomow BLE protocol library.
 
-[Unreleased]: https://github.com/arjanmels/robomow_ble/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/arjanmels/robomow_ble/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/arjanmels/robomow_ble/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/arjanmels/robomow_ble/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/arjanmels/robomow_ble/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/arjanmels/robomow_ble/compare/v0.2.0...v0.3.0

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Robomow-BLE"
-version = "1.1.0"
+version = "1.2.0"
 description = "Robomow BLE protocol library"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -29,6 +29,7 @@ dependencies = [
   "attrs>=23.2.0",
   "bleak>=0.22.0",
   "bleak-retry-connector>=3.10.0"
+
 ]
 
 [project.optional-dependencies]
