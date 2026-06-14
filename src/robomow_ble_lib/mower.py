@@ -842,11 +842,12 @@ class RobomowDevice:
         return await self._async_send_msg_with_sequence(
             MessageType.UPDATE_DATE_TIME,
             struct.pack(
-                ">HBBHBBB",
+                ">HBBHBBBB",
                 1,
                 timestamp.day,
                 timestamp.month,
                 timestamp.year,
+                (timestamp.weekday()+1)%7,
                 timestamp.hour,
                 timestamp.minute,
                 0,
@@ -1027,10 +1028,9 @@ class RobomowDevice:
             skipped = [self._pending_commands.popleft() for _ in range(index)]
             if skipped:
                 LOGGER.info(
-                    "Detected %d missing response(s) before command counter 0x%04X: %s",
+                    "Detected %d missing response(s) before command counter 0x%04X",
                     len(skipped),
-                    command_counter,
-                    ", ".join(f"0x{command.counter:04X}" for command in skipped),
+                    command_counter
                 )
 
             cmd = self._pending_commands.popleft()
