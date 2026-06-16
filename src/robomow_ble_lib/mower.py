@@ -102,13 +102,11 @@ class RobomowDevice:
         anti_theft_enabled: Whether anti-theft is enabled, if known.
         child_lock_enabled: Whether child lock is enabled, if known.
         anti_theft_active: Whether anti-theft is active, if known.
-        mower_home: Whether the mower is at home, if known.
-        charging_active: Whether charging is active, if known.
         message: Latest mower message, if known.
         operating_state: Latest operating state, if known.
         battery_level: Latest battery level, if known.
         next_departure: Next scheduled departure, if known.
-        previous_departure: Previous scheduled departure, if known.
+        previous_duration: Previous mowing duration, if known.
         expected_duration: Expected mowing duration, if known.
         no_depart_reason: Reason the mower has not departed, if known.
         rssi: Latest RSSI value, if known.
@@ -156,15 +154,13 @@ class RobomowDevice:
         self._operating_state: MowerOperatingState | str | None = None
         self._battery_level: int | None = None
         self._rssi: int | None = None
-        self._next_departure: int | None = None
-        self._previous_departure: int | None = None
+        self._next_departure: datetime | None = None
+        self._previous_duration: int | None = None
         self._expected_duration: int | None = None
-        self._no_depart_reason: str | None = None
+        self._no_depart_reason: Message | None = None
         self._anti_theft_enabled: bool | None = None
         self._child_lock_enabled: bool | None = None
         self._anti_theft_active: bool | None = None
-        self._mower_home: bool | None = None
-        self._charging_active: bool | None = None
         self._disabling_device_removed: bool | None = None
         self._wire_signal_type: WireSignalType | None = None
         self._starting_point_a: int | None = None
@@ -219,20 +215,6 @@ class RobomowDevice:
             return
         self._anti_theft_active = active
         self._data_changed(EntityKey.ANTI_THEFT_ACTIVE, active)
-
-    def _set_mower_home(self, is_home: bool | None) -> None:  # noqa: FBT001
-        """Update mower_home and emit change callbacks when needed."""
-        if self._mower_home == is_home:
-            return
-        self._mower_home = is_home
-        self._data_changed(EntityKey.MOWER_HOME, is_home)
-
-    def _set_charging_active(self, active: bool | None) -> None:  # noqa: FBT001
-        """Update charging_active and emit change callbacks when needed."""
-        if self._charging_active == active:
-            return
-        self._charging_active = active
-        self._data_changed(EntityKey.CHARGING_ACTIVE, active)
 
     def _set_disabling_device_removed(self, removed: bool | None) -> None:  # noqa: FBT001
         """Update disabling_device_removed and emit change callbacks when needed."""
@@ -291,7 +273,7 @@ class RobomowDevice:
         self._battery_level = battery_level
         self._data_changed(EntityKey.BATTERY_LEVEL, battery_level)
 
-    def _set_next_departure(self, value: int | None) -> None:
+    def _set_next_departure(self, value: datetime | None) -> None:
         """Update next departure and emit change callbacks when needed."""
         if self._next_departure == value:
             return
@@ -301,15 +283,15 @@ class RobomowDevice:
             self._next_departure = value
         self._data_changed(EntityKey.NEXT_DEPARTURE, self._next_departure)
 
-    def _set_previous_departure(self, value: int | None) -> None:
-        """Update previous departure and emit change callbacks when needed."""
-        if self._previous_departure == value:
+    def _set_previous_duration(self, value: int | None) -> None:
+        """Update previous duration and emit change callbacks when needed."""
+        if self._previous_duration == value:
             return
         if value == UNKNOWN_FIELD_VALUE:
-            self._previous_departure = None
+            self._previous_duration = None
         else:
-            self._previous_departure = value
-        self._data_changed(EntityKey.PREVIOUS_DEPARTURE, self._previous_departure)
+            self._previous_duration = value
+        self._data_changed(EntityKey.PREVIOUS_DURATION, self._previous_duration)
 
     def _set_expected_duration(self, value: int | None) -> None:
         """Update expected duration and emit change callbacks when needed."""
@@ -318,7 +300,7 @@ class RobomowDevice:
         self._expected_duration = value
         self._data_changed(EntityKey.EXPECTED_DURATION, self._expected_duration)
 
-    def _set_no_depart_reason(self, value: str | None) -> None:
+    def _set_no_depart_reason(self, value: Message | None) -> None:
         """Update no-depart reason and emit change callbacks when needed."""
         if self._no_depart_reason == value:
             return
@@ -450,14 +432,12 @@ class RobomowDevice:
         self._set_schedule_enabled(None)
         self._set_rssi(None)
         self._set_next_departure(None)
-        self._set_previous_departure(None)
+        self._set_previous_duration(None)
         self._set_expected_duration(None)
         self._set_no_depart_reason(None)
         self._set_anti_theft_enabled(None)
         self._set_child_lock_enabled(None)
         self._set_anti_theft_active(None)
-        self._set_mower_home(None)
-        self._set_charging_active(None)
         self._set_disabling_device_removed(None)
         self._set_wire_signal_type(None)
         self._set_starting_point_a(None)
@@ -595,16 +575,6 @@ class RobomowDevice:
         return self._anti_theft_active
 
     @property
-    def mower_home(self) -> bool | None:
-        """Return whether mower is currently at home, if known."""
-        return self._mower_home
-
-    @property
-    def charging_active(self) -> bool | None:
-        """Return whether charging is currently active, if known."""
-        return self._charging_active
-
-    @property
     def message(self) -> Message | None:
         """Return the latest mower status text, if known."""
         return self._message
@@ -620,14 +590,14 @@ class RobomowDevice:
         return self._battery_level
 
     @property
-    def next_departure(self) -> int | None:
+    def next_departure(self) -> datetime | None:
         """Return the next scheduled departure time, if known."""
         return self._next_departure
 
     @property
-    def previous_departure(self) -> int | None:
-        """Return the previous departure time, if known."""
-        return self._previous_departure
+    def previous_duration(self) -> int | None:
+        """Return the previous mowing duration, if known."""
+        return self._previous_duration
 
     @property
     def expected_duration(self) -> int | None:
@@ -635,7 +605,7 @@ class RobomowDevice:
         return self._expected_duration
 
     @property
-    def no_depart_reason(self) -> str | None:
+    def no_depart_reason(self) -> Message | None:
         """Return the reason the mower has not departed, if known."""
         return self._no_depart_reason
 

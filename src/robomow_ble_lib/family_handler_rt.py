@@ -8,8 +8,6 @@ import datetime
 import struct
 from typing import Any
 
-from .const import UNKNOWN_FIELD_VALUE
-
 from .const_rt import (
     CONFIG_META_DATA_PAYLOAD_SIZE,
     EXTENDED_STATE_PAYLOAD_SIZE,
@@ -214,14 +212,13 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
         ):
             return
 
-        (msgtype, msgid, stopid, _failureid) = struct.unpack_from(">BHHH", payload)
+        msgtype, msgid, stopid, _failureid = struct.unpack_from(">BHHH", payload)
 
+        # TODO(AM): Mower messages seem incorrect: check and fix
         if msgtype & MESSAGE_TYPE_STOP_ID_MASK:
             self._device._set_message(get_error_message(stopid))
         else:
-            self._device._set_message(
-                get_message(msgid) if msgid != UNKNOWN_FIELD_VALUE else None
-            )
+            self._device._set_message(get_message(msgid))
 
     def handle_read_eeprom_response(self, request: Any, response: Any) -> None:
         """Handle a READ_EEPROM response after pending command matching."""
@@ -428,8 +425,8 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             byte_0,
             state,
             battery_level,
-            next_departure,
-            previous_departure,
+            next_departure_minutes,
+            previous_duration,
             expected_duration,
             _one_time_setup,
             no_depart_reason,
@@ -444,6 +441,19 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             offset=MISC_TYPE_MIN_SIZE,
         )
 
+        now = datetime.datetime.now(datetime.UTC)
+        previous_sunday = (
+            now - datetime.timedelta(days=(now.weekday() + 1) % 7)
+        ).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        next_departure = previous_sunday + datetime.timedelta(
+            minutes=next_departure_minutes
+        )
+
         operation = byte_0 & 0x07
         schedule_enabled = byte_0 & 0x10 != 0
 
@@ -451,7 +461,6 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
         anti_theft_active = byte_10 & 0x02 != 0
         child_lock_enabled = byte_10 & 0x10 != 0
 
-        mower_home = byte_11 & 0x01 != 0
         disabling_device_removed = byte_11 & 0x02 != 0
         charging_active = byte_11 & 0x10 != 0
 
@@ -459,9 +468,9 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             "  %s: operation=%d state=%d battery=%d "
             "_one_time_setup=%d no_depart_reason=%d _byte_10=%d byte_11=%d byte_12=%d "
             "charging_state=%d byte_14=%d\n"
-            "  next_departure=%d previous_departure=%d expected_duration=%d "
+            "  next_departure=%s previous_duration=%d expected_duration=%d "
             "anti_theft_enabled=%s anti_theft_active=%s child_lock_enabled=%s"
-            "  mower_home=%s disabling_device_removed=%s charging_active=%s",
+            "  disabling_device_removed=%s charging_active=%s",
             state_name,
             operation,
             state,
@@ -473,13 +482,12 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             byte_12,
             charging_state,
             byte_14,
-            next_departure,
-            previous_departure,
+            next_departure.isoformat(),
+            previous_duration,
             expected_duration,
             anti_theft_enabled,
             anti_theft_active,
             child_lock_enabled,
-            mower_home,
             disabling_device_removed,
             charging_active,
         )
@@ -488,21 +496,15 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
         self._device._set_anti_theft_enabled(anti_theft_enabled)
         self._device._set_child_lock_enabled(child_lock_enabled)
         self._device._set_anti_theft_active(anti_theft_active)
-        self._device._set_mower_home(mower_home)
-        self._device._set_charging_active(charging_active)
         self._device._set_disabling_device_removed(disabling_device_removed)
         self._device._set_state(
             self._device._describe_operating_state(state, operation)
         )
         self._device._set_battery_level(battery_level)
         self._device._set_next_departure(next_departure)
-        self._device._set_previous_departure(previous_departure)
+        self._device._set_previous_duration(previous_duration)
         self._device._set_expected_duration(expected_duration)
-        self._device._set_no_depart_reason(
-            ""
-            if no_depart_reason == 0
-            else str(get_no_depart_message(no_depart_reason))
-        )
+        self._device._set_no_depart_reason(get_no_depart_message(no_depart_reason))
 
     def _handle_misc_schedule(self, payload: bytes | bytearray | memoryview) -> None:
         """Handle GET_SCHEDULE miscellaneous payload."""

@@ -151,7 +151,7 @@ class EntityKey(StrEnum):
     SCHEDULE = "schedule"
     SERVICE_INFO = "service_info"
     NEXT_DEPARTURE = "next_departure"
-    PREVIOUS_DEPARTURE = "previous_departure"
+    PREVIOUS_DURATION = "previous_duration"
     EXPECTED_DURATION = "expected_duration"
     NO_DEPART_REASON = "no_depart_reason"
     ANTI_THEFT_ENABLED = "anti_theft_enabled"
