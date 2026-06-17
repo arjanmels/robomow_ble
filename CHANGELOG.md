@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.4.0] - 2026-06-17
-
-- Improved datetime handling with UTC awareness and local timezone support.
-- Added `get_status_text()` function for accurate operation status message retrieval.
-- Enhanced RT message handling with improved debug logging in GET_MESSAGE handler.
-- Refined message text by removing redundant labels and fixing capitalization.
 
 ## [1.3.0] - 2026-06-16
 
@@ -58,7 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of the Robomow BLE protocol library.
 
 [Unreleased]: https://github.com/arjanmels/robomow_ble/compare/v1.4.0...HEAD
-[1.4.0]: https://github.com/arjanmels/robomow_ble/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/arjanmels/robomow_ble/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/arjanmels/robomow_ble/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/arjanmels/robomow_ble/compare/v1.0.0...v1.1.0
