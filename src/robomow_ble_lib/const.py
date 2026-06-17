@@ -157,8 +157,6 @@ class EntityKey(StrEnum):
     ANTI_THEFT_ENABLED = "anti_theft_enabled"
     CHILD_LOCK_ENABLED = "child_lock_enabled"
     ANTI_THEFT_ACTIVE = "anti_theft_active"
-    MOWER_HOME = "mower_home"
-    CHARGING_ACTIVE = "charging_active"
     DISABLING_DEVICE_REMOVED = "disabling_device_removed"
     WIRE_SIGNAL_TYPE = "wire_signal_type"
     STARTING_POINT_A = "starting_point_a"

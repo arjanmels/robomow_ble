@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-import datetime
+from datetime import datetime, UTC, timedelta, time
 import struct
 from typing import Any
 
@@ -24,6 +24,7 @@ from .const_rt import (
     get_error_message,
     get_message,
     get_no_depart_message,
+    get_status_text,
 )
 
 from .const import (
@@ -214,11 +215,21 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
 
         msgtype, msgid, stopid, _failureid = struct.unpack_from(">BHHH", payload)
 
-        # TODO(AM): Mower messages seem incorrect: check and fix
         if msgtype & MESSAGE_TYPE_STOP_ID_MASK:
-            self._device._set_message(get_error_message(stopid))
+            msg=get_error_message(stopid)
         else:
-            self._device._set_message(get_message(msgid))
+            msg=get_message(msgid)
+            
+        LOGGER.debug(
+            "  GET_MESSAGE: msgtype=0x%02X msgid=0x%02X stopid=0x%04X failureid=0x%04X message=%s",
+            msgtype,
+            msgid,
+            stopid,
+            _failureid,
+            msg,
+        )
+        
+        self._device._set_message(msg)
 
     def handle_read_eeprom_response(self, request: Any, response: Any) -> None:
         """Handle a READ_EEPROM response after pending command matching."""
@@ -441,16 +452,16 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             offset=MISC_TYPE_MIN_SIZE,
         )
 
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.now().astimezone()
         previous_sunday = (
-            now - datetime.timedelta(days=(now.weekday() + 1) % 7)
+            now - timedelta(days=(now.weekday() + 1) % 7)
         ).replace(
             hour=0,
             minute=0,
             second=0,
             microsecond=0,
         )
-        next_departure = previous_sunday + datetime.timedelta(
+        next_departure = previous_sunday + timedelta(
             minutes=next_departure_minutes
         )
 
@@ -518,8 +529,8 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
         schedule_enabled = schedule_enabled != 0
 
         schedule: MowerSchedule = MowerSchedule(
-            start_time=datetime.time(hour=start_time // 60, minute=start_time % 60),
-            end_time=datetime.time(hour=end_time // 60, minute=end_time % 60),
+            start_time=time(hour=start_time // 60, minute=start_time % 60),
+            end_time=time(hour=end_time // 60, minute=end_time % 60),
         )
 
         LOGGER.debug(
@@ -585,13 +596,13 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             duration = (end_hour - hour) * 60 + (end_minute - minute)
 
             try:
-                start_time = datetime.datetime(
+                start_time = datetime(
                     2000 + year_offset,
                     month,
                     day,
                     hour,
                     minute,
-                    tzinfo=datetime.UTC,
+                    tzinfo=UTC,
                 )
             except ValueError:
                 LOGGER.debug("    record[%d]: invalid date", i)
@@ -604,7 +615,7 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
                 start_time.isoformat(timespec="minutes"),
                 duration,
                 zone_byte,
-                get_message(error_code),
+                get_status_text(error_code),
             )
 
             self._operations[op_id] = MowerOperation(
@@ -612,7 +623,7 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
                 start_time=start_time,
                 duration=duration,
                 zone=Zone(zone_byte),
-                error=get_message(error_code),
+                error=get_status_text(error_code),
             )
 
         sorted_operations = sorted(
