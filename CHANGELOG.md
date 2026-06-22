@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.3.1] - 2026-06-22
+
+- Fixed `next_departure` handling for invalid minute values (0xFFFF) by returning `None` and adding a week if it wraps around.
+- Removed unnecessary `asyncio.CancelledError` suppression in disconnect logic.
+
+
 ## [1.3.0] - 2026-06-16
 
 - `next_departure` is now exposed as a UTC `datetime` instead of a raw integer value.
@@ -51,7 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of the Robomow BLE protocol library.
 
-[Unreleased]: https://github.com/arjanmels/robomow_ble/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/arjanmels/robomow_ble/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/arjanmels/robomow_ble/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/arjanmels/robomow_ble/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/arjanmels/robomow_ble/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/arjanmels/robomow_ble/compare/v1.0.0...v1.1.0

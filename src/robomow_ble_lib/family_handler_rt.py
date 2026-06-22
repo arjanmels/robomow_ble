@@ -452,18 +452,23 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             offset=MISC_TYPE_MIN_SIZE,
         )
 
-        now = datetime.now().astimezone()
-        previous_sunday = (
-            now - timedelta(days=(now.weekday() + 1) % 7)
-        ).replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
-        )
-        next_departure = previous_sunday + timedelta(
-            minutes=next_departure_minutes
-        )
+        if next_departure_minutes != 0xFFFF:
+            now = datetime.now().astimezone()
+            previous_sunday = (
+                now - timedelta(days=(now.weekday() + 1) % 7)
+            ).replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
+            )
+            next_departure = previous_sunday + timedelta(
+                minutes=next_departure_minutes
+            )
+            if next_departure < now:
+                next_departure += timedelta(days=7)
+        else:
+            next_departure = None        
 
         operation = byte_0 & 0x07
         schedule_enabled = byte_0 & 0x10 != 0
@@ -493,7 +498,7 @@ class RobomowRtFamilyHandler(RobomowFamilyHandler):
             byte_12,
             charging_state,
             byte_14,
-            next_departure.isoformat(),
+            next_departure.isoformat() if next_departure else "?",
             previous_duration,
             expected_duration,
             anti_theft_enabled,

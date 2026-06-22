@@ -277,10 +277,7 @@ class RobomowDevice:
         """Update next departure and emit change callbacks when needed."""
         if self._next_departure == value:
             return
-        if value == UNKNOWN_FIELD_VALUE:
-            self._next_departure = None
-        else:
-            self._next_departure = value
+        self._next_departure = value
         self._data_changed(EntityKey.NEXT_DEPARTURE, self._next_departure)
 
     def _set_previous_duration(self, value: int | None) -> None:
@@ -660,8 +657,7 @@ class RobomowDevice:
                 )
             connect_task = self._connect_task
 
-        with suppress(asyncio.CancelledError):
-            await connect_task
+        await connect_task
 
     async def _async_disconnect_unlocked(self) -> None:
         """Disconnect without acquiring the connect lock."""
